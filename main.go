@@ -9,13 +9,6 @@ import (
 	"github.com/springernature/cf-route-service-sso-oauth/providers"
 )
 
-var (
-	authUri  string
-	tokenUri string
-	clientID string
-	clientS  string
-)
-
 func main() {
 	log.SetOutput(os.Stdout)
 
@@ -44,5 +37,11 @@ func main() {
 		}
 	})
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// Default port number
+	port := "8080"
+	if p := os.Getenv("PORT"); p != "" {
+		port = p
+	}
+	// Start web server
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
