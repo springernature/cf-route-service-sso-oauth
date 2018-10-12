@@ -79,8 +79,9 @@ func (p *GoogleProvider) Callback(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// Get the second part (payload) of the JWT (IDToken)
+		jwt := strings.TrimSuffix(strings.Split(t.IDToken, ".")[1], "=")
 		// Decode this base64 string to byte array
-		TokBytes, err := base64.StdEncoding.WithPadding(base64.NoPadding).DecodeString(strings.Split(t.IDToken, ".")[1])
+		jwtBytes, err := base64.RawURLEncoding.DecodeString(jwt)
 		if err != nil {
 			// Output error
 			fmt.Println(err)
@@ -90,7 +91,7 @@ func (p *GoogleProvider) Callback(w http.ResponseWriter, r *http.Request) {
 			Email string `json:"email"`
 		}
 		var p Payload
-		if err = json.Unmarshal(TokBytes, &p); err != nil {
+		if err = json.Unmarshal(jwtBytes, &p); err != nil {
 			// Output error
 			fmt.Println(err)
 			return
