@@ -1,0 +1,10 @@
+---
+applications:
+- name: cf-route-service-sso-oauth-test-gerard
+  command: cf-route-service-sso-oauth
+  #buildpack: https://github.com/cloudfoundry/staticfile-buildpack#v1.3.18
+  memory: 50M
+  disk_quota: 50M
+  instances: 1
+  routes:
+  - route: sso-test-gerard.snpaas.eu
