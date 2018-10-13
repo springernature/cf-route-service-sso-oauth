@@ -16,7 +16,9 @@ type ProviderData struct {
 
 type Provider interface {
 	SignIn(http.ResponseWriter, *http.Request)
-	Callback(http.ResponseWriter, *http.Request)
+	Redeem(*http.Request) ([]byte, error)
+	GetEmail([]byte) (string, error)
+	Filter([]byte) (bool, error)
 }
 
 func InitProviderData() *ProviderData {

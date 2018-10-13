@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/springernature/cf-route-service-sso-oauth/handler"
 	"github.com/springernature/cf-route-service-sso-oauth/providers"
 )
 
@@ -22,10 +23,17 @@ func main() {
 
 	// Sign in handler
 	http.HandleFunc("/signin", provider.SignIn)
+
 	// Callback handler
-	http.HandleFunc("/callback", provider.Callback)
+	h := &handler.CallbackHandler{
+		Redeem:   provider.Redeem,
+		GetEmail: provider.GetEmail,
+		Filter:   provider.Filter,
+	}
+	http.Handle("/callback", handler.NewCallbackHandler(h))
 
 	// Default handler
+	// (i.e. Check if user is already authenticated. If yes, proxy to the app)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		//fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
 		// Check if already logged in

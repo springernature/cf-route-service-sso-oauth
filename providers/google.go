@@ -3,7 +3,8 @@ package providers
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	"errors"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -45,10 +46,9 @@ func (p *GoogleProvider) SignIn(w http.ResponseWriter, r *http.Request) {
 		"redirect_uri="+scheme+"://"+r.Host+"/callback", 302)
 }
 
-func (p *GoogleProvider) Callback(w http.ResponseWriter, r *http.Request) {
-	// Check if the callback comntains an authorization code
+func (p *GoogleProvider) Redeem(r *http.Request) ([]byte, error) {
+	// Check if the callback contains an authorization code
 	if code := r.FormValue("code"); code != "" {
-		//fmt.Fprint(w, "Code is: "+code)
 		// Exchange code for access token and ID token
 		v := url.Values{}
 		v.Add("code", code)
@@ -62,43 +62,47 @@ func (p *GoogleProvider) Callback(w http.ResponseWriter, r *http.Request) {
 		v.Add("grant_type", "authorization_code")
 		resp, err := http.PostForm(p.TokenUri, v)
 		if err != nil {
-			// Output error
-			fmt.Println(err)
-			return
+			return nil, err
 		} else if resp.StatusCode != 200 {
-			fmt.Fprint(w, "The POST to the token endpoint did not return HTTP 200 OK")
-			return
+			return nil, errors.New("The POST to the token endpoint did not return HTTP 200 OK")
 		}
-		type Token struct {
-			IDToken string `json:"id_token"`
-		}
-		var t Token
-		if err := json.NewDecoder(resp.Body).Decode(&t); err != nil {
-			// Output err
-			fmt.Println(err)
-			return
-		}
-		// Get the second part (payload) of the JWT (IDToken)
-		jwt := strings.TrimSuffix(strings.Split(t.IDToken, ".")[1], "=")
-		// Decode this base64 string to byte array
-		jwtBytes, err := base64.RawURLEncoding.DecodeString(jwt)
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			// Output error
-			fmt.Println(err)
-			return
+			return nil, err
 		}
-		type Payload struct {
-			Email string `json:"email"`
-		}
-		var p Payload
-		if err = json.Unmarshal(jwtBytes, &p); err != nil {
-			// Output error
-			fmt.Println(err)
-			return
-		}
-		// Return username
-		fmt.Fprintf(w, "Username: %v", p.Email)
-		return
+		return body, nil
 	}
-	fmt.Fprint(w, "Not a valid callback!")
+	return nil, errors.New("Callback does not contain authorization code")
+}
+
+func (p *GoogleProvider) GetEmail(b []byte) (string, error) {
+	type Token struct {
+		IDToken string `json:"id_token"`
+	}
+	var t Token
+	if err := json.Unmarshal(b, &t); err != nil {
+		return "", err
+	}
+	// Get the second part (payload) of the JWT (IDToken)
+	jwt := strings.TrimSuffix(strings.Split(t.IDToken, ".")[1], "=")
+	// Decode this base64 string to byte array
+	jwtBytes, err := base64.RawURLEncoding.DecodeString(jwt)
+	if err != nil {
+		return "", err
+	}
+	type Payload struct {
+		Email string `json:"email"`
+	}
+	var payload Payload
+	if err := json.Unmarshal(jwtBytes, &payload); err != nil {
+		return "", err
+	}
+	// Return username
+	return payload.Email, nil
+}
+
+func (p *GoogleProvider) Filter([]byte) (bool, error) {
+	// No additional authorization filter
+	return true, nil
 }
