@@ -25,12 +25,7 @@ func main() {
 	http.HandleFunc("/signin", provider.SignIn)
 
 	// Callback handler
-	h := &handler.CallbackHandler{
-		Redeem:   provider.Redeem,
-		GetEmail: provider.GetEmail,
-		Filter:   provider.Filter,
-	}
-	http.Handle("/callback", handler.NewCallbackHandler(h))
+	http.Handle("/callback", handler.NewCallbackHandler(provider))
 
 	// Default handler
 	// (i.e. Check if user is already authenticated. If yes, proxy to the app)

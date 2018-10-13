@@ -16,9 +16,10 @@ type GoogleProvider struct {
 }
 
 func NewGoogleProvider(p *ProviderData) *GoogleProvider {
-	// Check if there is an override for the default endpoints
+	// Declare default endpoints
 	authUri := "https://accounts.google.com/o/oauth2/auth"
 	tokenUri := "https://www.googleapis.com/oauth2/v3/token"
+	// Check if there is an override for the default endpoints
 	if uri := os.Getenv("GOOGLEAUTHURI"); uri != "" {
 		authUri = uri
 	}
