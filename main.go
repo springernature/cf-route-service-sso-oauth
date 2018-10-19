@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -22,23 +21,25 @@ func main() {
 	}
 
 	// Sign in handler
-	http.HandleFunc("/signin", provider.SignIn)
+	http.HandleFunc(providers.SigninPath, provider.SignIn)
 
 	// Callback handler
-	http.Handle("/callback", handler.NewCallbackHandler(provider))
+	http.Handle(providers.CallbackPath, handler.NewCallbackHandler(provider))
 
 	// Default handler
 	// (i.e. Check if user is already authenticated. If yes, proxy to the app)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		//fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
-		// Check if already logged in
-		cookie, _ := r.Cookie("auth")
-		if cookie != nil {
-			fmt.Fprint(w, "You are authenticated!")
-		} else {
-			fmt.Fprint(w, "<html>You are NOT authenticated. <a href=\"/signin\">Sign in</a> Host: "+r.Host+"</html>")
-		}
-	})
+	http.HandleFunc("/", handler.DefaultPathHandler)
+
+	/*
+		Via the app:
+		r.Host: sso-test-gerard.snpaas.eu
+		Header: https://gerard-test.snpaas.eu/test/?bla=foo
+
+		Direct on the service:
+		r.URL.Path: /test
+		r.URL.RequestURI: /test?bla=foo&animal=dog
+		r.Host: sso-test-gerard.snpaas.eu
+	*/
 
 	// Default port number
 	port := "8080"

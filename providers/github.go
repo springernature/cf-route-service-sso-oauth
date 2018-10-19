@@ -28,6 +28,6 @@ func (p *GitHubProvider) GetEmail([]byte) (string, error) {
 	return "", nil
 }
 
-func (p *GitHubProvider) Filter([]byte) (bool, error) {
-	return false, nil
+func (p *GitHubProvider) Filter([]byte) (string, error) {
+	return "", nil
 }

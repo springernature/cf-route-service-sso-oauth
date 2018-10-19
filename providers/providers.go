@@ -6,6 +6,11 @@ import (
 	"os"
 )
 
+const (
+	SigninPath   string = "/cfsso/signin"
+	CallbackPath string = "/cfsso/callback"
+)
+
 type ProviderData struct {
 	Provider     string
 	ClientID     string
@@ -18,7 +23,7 @@ type Provider interface {
 	SignIn(http.ResponseWriter, *http.Request)
 	Redeem(*http.Request) ([]byte, error)
 	GetEmail([]byte) (string, error)
-	Filter([]byte) (bool, error)
+	Filter([]byte) (string, error)
 }
 
 func InitProviderData() *ProviderData {

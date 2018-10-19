@@ -3,7 +3,9 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 
+	"github.com/springernature/cf-route-service-sso-oauth/htmltemplate"
 	"github.com/springernature/cf-route-service-sso-oauth/providers"
 )
 
@@ -31,18 +33,55 @@ func (ch *CallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Apply additional provider specifc filters (e.g. Is user member of group or team?)
-	access, err := ch.Provider.Filter(b)
+	// Error returned means the user is not authenticated based on this filter
+	attr, err := ch.Provider.Filter(b)
 	if err != nil {
-		fmt.Fprintf(w, "Error while applying additional provider specific authorization filter: %v", err)
-		return
-	}
-	if !access {
-		fmt.Fprint(w, "Unauthorized!")
+		fmt.Fprintf(w, htmltemplate.FilterErr, err)
 		return
 	}
 
-	// Redirect back to app
+	// ============= AUTHENTICATED USER ============= //
+	// Issue a new JWT
+	jwt, err := newJwt(username, attr)
+	if err != nil {
+		fmt.Fprintf(w, htmltemplate.JwtIssueErr, err)
+		return
+	}
 
-	// Return username
-	fmt.Fprintf(w, "Username: %v", username)
+	// Fetch the URL of the app (origin)
+	// We'll use this later to redirect back to the app
+	orgCookie, err := r.Cookie("CfSsoReqOrigin")
+	if err != nil {
+		fmt.Fprintf(w, htmltemplate.NoOriginCookieErr, err)
+		return
+	}
+	_, err = url.Parse(orgCookie.Value)
+	if err != nil {
+		fmt.Fprintf(w, htmltemplate.NoValidOriginErr, err)
+		return
+	}
+
+	// Set the JWT cookie. Based on this cookie this service will now know
+	// this user is already authenticated.
+	jwtCookie := &http.Cookie{
+		Name:   "CfSsoJwt",
+		Value:  jwt,
+		Domain: apexDomain(r.Host),
+		Path:   "/",
+	}
+	http.SetCookie(w, jwtCookie)
+
+	// Unset the origin cookie as we don't need it anymore
+	// as we'll be redirecting back to the origin shortly after
+	orgUrl := orgCookie.Value
+	orgCookie.MaxAge = -1
+	orgCookie.Domain = apexDomain(r.Host)
+	orgCookie.Path = "/"
+	http.SetCookie(w, orgCookie)
+	// Redirect
+	http.Redirect(w, r, orgUrl, 302)
+}
+
+func newJwt(username string, attr string) (string, error) {
+	return username, nil
 }

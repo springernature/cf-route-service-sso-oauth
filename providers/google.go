@@ -36,15 +36,11 @@ func NewGoogleProvider(p *ProviderData) *GoogleProvider {
 }
 
 func (p *GoogleProvider) SignIn(w http.ResponseWriter, r *http.Request) {
-	scheme := "https"
-	if r.Host == "localhost:8080" {
-		scheme = "http"
-	}
 	http.Redirect(w, r, p.AuthUri+"?"+
 		"client_id="+p.ClientID+"&"+
 		"response_type=code"+"&"+
 		"scope=openid%20email"+"&"+
-		"redirect_uri="+scheme+"://"+r.Host+"/callback", 302)
+		"redirect_uri=https://"+r.Host+CallbackPath, 302)
 }
 
 func (p *GoogleProvider) Redeem(r *http.Request) ([]byte, error) {
@@ -55,23 +51,22 @@ func (p *GoogleProvider) Redeem(r *http.Request) ([]byte, error) {
 		v.Add("code", code)
 		v.Add("client_id", p.ClientID)
 		v.Add("client_secret", p.ClientSecret)
-		scheme := "https"
-		if r.Host == "localhost:8080" {
-			scheme = "http"
-		}
-		v.Add("redirect_uri", scheme+"://"+r.Host+"/callback")
+		v.Add("redirect_uri", "https://"+r.Host+CallbackPath)
 		v.Add("grant_type", "authorization_code")
 		resp, err := http.PostForm(p.TokenUri, v)
 		if err != nil {
 			return nil, err
-		} else if resp.StatusCode != 200 {
-			return nil, errors.New("The POST to the token endpoint did not return HTTP 200 OK")
 		}
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
 		}
+		if resp.StatusCode != 200 {
+			return nil, errors.New(`The POST to the token endpoint did not return HTTP 200 OK. ` +
+				`Returned body is: ` + string(body[:]))
+		}
+		// All is good. Return the body as byte array
 		return body, nil
 	}
 	return nil, errors.New("Callback does not contain authorization code")
@@ -103,7 +98,7 @@ func (p *GoogleProvider) GetEmail(b []byte) (string, error) {
 	return payload.Email, nil
 }
 
-func (p *GoogleProvider) Filter([]byte) (bool, error) {
+func (p *GoogleProvider) Filter([]byte) (string, error) {
 	// No additional authorization filter
-	return true, nil
+	return "", nil
 }
