@@ -7,6 +7,7 @@ import (
 
 	"github.com/springernature/cf-route-service-sso-oauth/htmltemplate"
 	"github.com/springernature/cf-route-service-sso-oauth/providers"
+	"github.com/springernature/cf-route-service-sso-oauth/token"
 )
 
 type CallbackHandler struct {
@@ -42,7 +43,7 @@ func (ch *CallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// ============= AUTHENTICATED USER ============= //
 	// Issue a new JWT
-	jwt, err := newJwt(username, attr)
+	jwt, err := token.NewJwt(username, attr)
 	if err != nil {
 		fmt.Fprintf(w, htmltemplate.JwtIssueErr, err)
 		return
@@ -80,8 +81,4 @@ func (ch *CallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, orgCookie)
 	// Redirect
 	http.Redirect(w, r, orgUrl, 302)
-}
-
-func newJwt(username string, attr string) (string, error) {
-	return username, nil
 }

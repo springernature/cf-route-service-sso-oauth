@@ -10,6 +10,7 @@ import (
 
 	"github.com/springernature/cf-route-service-sso-oauth/htmltemplate"
 	"github.com/springernature/cf-route-service-sso-oauth/providers"
+	"github.com/springernature/cf-route-service-sso-oauth/token"
 )
 
 func DefaultPathHandler(w http.ResponseWriter, r *http.Request) {
@@ -22,8 +23,8 @@ func DefaultPathHandler(w http.ResponseWriter, r *http.Request) {
 
 	// ================ PROXY ================ //
 	// If authentication token (JWT) in cookie is still valid, proxy the request to the target app
-	jwtcookie, _ := r.Cookie("CfSsoJwt") // TODO: Error handling for Cookie
-	if jwtcookie != nil {
+	jwtcookie, _ := r.Cookie("CfSsoJwt")
+	if jwtcookie != nil && token.ValidJwt(jwtcookie.Value) {
 		proxy := &httputil.ReverseProxy{Director: director}
 		proxy.ServeHTTP(w, r)
 		return
