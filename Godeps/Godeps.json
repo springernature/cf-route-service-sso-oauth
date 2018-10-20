@@ -1,6 +1,0 @@
-{
-	"ImportPath": "github.com/springernature/cf-route-service-sso-oauth",
-	"GoVersion": "1.10.2",
-	"GodepVersion": "v80",
-	"Deps": []
-}
