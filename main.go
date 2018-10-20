@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/springernature/cf-route-service-sso-oauth/handler"
-	"github.com/springernature/cf-route-service-sso-oauth/providers"
+	"github.com/springernature/oauth-route-service-broker/handler"
+	"github.com/springernature/oauth-route-service-broker/providers"
 )
 
 func main() {

@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/springernature/cf-route-service-sso-oauth/htmltemplate"
-	"github.com/springernature/cf-route-service-sso-oauth/providers"
-	"github.com/springernature/cf-route-service-sso-oauth/token"
+	"github.com/springernature/oauth-route-service-broker/htmltemplate"
+	"github.com/springernature/oauth-route-service-broker/providers"
+	"github.com/springernature/oauth-route-service-broker/token"
 )
 
 type CallbackHandler struct {

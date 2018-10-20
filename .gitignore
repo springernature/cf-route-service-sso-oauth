@@ -12,6 +12,5 @@
 *.out
 
 credentials.json
-cf-route-service-sso-oauth
 oauth-route-service-broker-linux
 oauth-route-service-broker
