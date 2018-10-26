@@ -54,6 +54,9 @@ func main() {
 	// Service Catalog
 	r.Get("/v2/catalog", broker.Catalog)
 
+	// Service provisioning (Create, Delete and Status of a 'service instance' )
+	r.Route("/v2/service_instances/{service_id}", broker.Provision)
+
 	// Default port number
 	port := "8080"
 	if p := os.Getenv("PORT"); p != "" {
