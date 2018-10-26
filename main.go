@@ -57,6 +57,9 @@ func main() {
 	// Service provisioning (Create, Delete and Status of a 'service instance' )
 	r.Route("/v2/service_instances/{service_id}", broker.Provision)
 
+	// Service binding
+	r.Route("/v2/service_instances/{service_id}/service_bindings/{service_binding_id}", broker.Binding)
+
 	// Default port number
 	port := "8080"
 	if p := os.Getenv("PORT"); p != "" {
