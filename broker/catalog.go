@@ -20,7 +20,7 @@ func Catalog(w http.ResponseWriter, r *http.Request) {
 				Plans: []*cf.Plan{
 					{
 						ID:          "abff1ea2-ad5e-44d4-9f00-036fcd5d16eb",
-						Name:        "Google",
+						Name:        "google",
 						Description: "SSO is implemented using Google as identity provider. Users need to sign in with a valid corporate email address.",
 						Free:        true,
 					},
