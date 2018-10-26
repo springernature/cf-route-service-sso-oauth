@@ -1,8 +1,11 @@
 package htmltemplate
 
 const (
-	FilterErr string = `<html><h2>Unauthorized!</h2>
+	ProviderFilterErr string = `<html><h2>Unauthorized!</h2>
 	<p>Error while applying additional provider specific authorization filter:</p>
+	<p><b>%v</b></p></html>`
+	GenericFilterErr string = `<html><h2>Unauthorized!</h2>
+	<p>Error while applying generic authorization filter:</p>
 	<p><b>%v</b></p></html>`
 	JwtIssueErr string = `<html><h2>Unauthorized!</h2>
 	<p>Error while trying to issue a new authentication token (JWT):</p>

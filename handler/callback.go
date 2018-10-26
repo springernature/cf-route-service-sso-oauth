@@ -37,7 +37,15 @@ func (ch *CallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Error returned means the user is not authenticated based on this filter
 	attr, err := ch.Provider.Filter(b)
 	if err != nil {
-		fmt.Fprintf(w, htmltemplate.FilterErr, err)
+		fmt.Fprintf(w, htmltemplate.ProviderFilterErr, err)
+		return
+	}
+
+	// Apply generic (not provider specific) filters
+	// Will only be applied for those filters that are activated through environment variables
+	err = filter(username, attr)
+	if err != nil {
+		fmt.Fprintf(w, htmltemplate.GenericFilterErr, err)
 		return
 	}
 
