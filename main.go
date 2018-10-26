@@ -4,13 +4,18 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/springernature/oauth-route-service-broker/handler"
 	"github.com/springernature/oauth-route-service-broker/providers"
 )
 
 func main() {
 	log.SetOutput(os.Stdout)
+	r := chi.NewRouter()
+	r.Use(middleware.Timeout(60 * time.Second))
 
 	// Get initial ProviderData
 	data := providers.InitProviderData()
@@ -21,14 +26,14 @@ func main() {
 	}
 
 	// Sign in handler
-	http.HandleFunc(providers.SigninPath, provider.SignIn)
+	r.Get(providers.SigninPath, provider.SignIn)
 
 	// Callback handler
-	http.Handle(providers.CallbackPath, handler.NewCallbackHandler(provider))
+	r.Handle(providers.CallbackPath, handler.NewCallbackHandler(provider))
 
 	// Default handler
 	// (i.e. Check if user is already authenticated. If yes, proxy to the app)
-	http.HandleFunc("/", handler.DefaultPathHandler)
+	r.HandleFunc("/", handler.DefaultPathHandler)
 
 	/*
 		Via the app:
@@ -47,5 +52,5 @@ func main() {
 		port = p
 	}
 	// Start web server
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, r))
 }
