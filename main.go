@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/springernature/oauth-route-service-broker/broker"
 	"github.com/springernature/oauth-route-service-broker/handler"
 	"github.com/springernature/oauth-route-service-broker/providers"
 )
@@ -45,6 +46,13 @@ func main() {
 		r.URL.RequestURI: /test?bla=foo&animal=dog
 		r.Host: sso-test-gerard.snpaas.eu
 	*/
+
+	// =============================
+	// ====== Broker handlers ======
+	// =============================
+
+	// Service Catalog
+	r.Get("/v2/catalog", broker.Catalog)
 
 	// Default port number
 	port := "8080"
