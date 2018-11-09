@@ -18,23 +18,18 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	// Get initial ProviderData
-	data := providers.InitProviderData()
-	// Create Provider instance
-	provider, err := providers.New(data)
-	if err != nil {
-		log.Fatalf("ERROR: %v", err)
+	// Set handlers for all enabled oauth providers
+	for _, p := range providers.EnabledProviders() {
+		// Sign in handler
+		r.Get("/" + p.Name() + providers.SigninPath, p.SignIn)
+
+		// Callback handler
+		r.Handle("/" + p.Name() + providers.CallbackPath, handler.NewCallbackHandler(p))
+
+		// Default handler
+		// (i.e. Check if user is already authenticated. If yes, proxy to the app)
+		r.HandleFunc("/" + p.Name(), handler.DefaultPathHandler)
 	}
-
-	// Sign in handler
-	r.Get(providers.SigninPath, provider.SignIn)
-
-	// Callback handler
-	r.Handle(providers.CallbackPath, handler.NewCallbackHandler(provider))
-
-	// Default handler
-	// (i.e. Check if user is already authenticated. If yes, proxy to the app)
-	r.HandleFunc("/", handler.DefaultPathHandler)
 
 	/*
 		Via the app:

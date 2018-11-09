@@ -15,7 +15,20 @@ type GoogleProvider struct {
 	*ProviderData
 }
 
-func NewGoogleProvider(p *ProviderData) *GoogleProvider {
+func GoogleProviderInterface() (Provider, error) {
+	return NewGoogleProvider()
+}
+
+func NewGoogleProvider() (*GoogleProvider, error) {
+	// Check if Google Provider is set in env vars
+	var clientID, clientSecret string
+	if i, s := clientIdAndSecret(); i != "" && s != "" {
+		clientID = i
+		clientSecret = s
+	} else {
+		// If clientID and Secret are not set, this provider is not set
+		return nil, errors.New("Google Provider is not set")
+	}
 	// Declare default endpoints
 	authUri := "https://accounts.google.com/o/oauth2/auth"
 	tokenUri := "https://www.googleapis.com/oauth2/v3/token"
@@ -26,13 +39,26 @@ func NewGoogleProvider(p *ProviderData) *GoogleProvider {
 	if uri := os.Getenv("GOOGLETOKENURI"); uri != "" {
 		tokenUri = uri
 	}
-	// Add endpoints to ProviderData
-	p.AuthUri = authUri
-	p.TokenUri = tokenUri
 	// Return
 	return &GoogleProvider{
-		ProviderData: p,
-	}
+		&ProviderData{
+			ClientID:     clientID,
+			ClientSecret: clientSecret,
+			AuthUri:      authUri,
+			TokenUri:     tokenUri,
+		},
+	}, nil
+}
+
+func clientIdAndSecret() (string, string) {
+	return os.Getenv("GOOGLECLIENTID"), os.Getenv("GOOGLECLIENTSECRET")
+}
+
+// ==============================
+// All Provider interface methods
+
+func (p *GoogleProvider) Name() string {
+	return "google"
 }
 
 func (p *GoogleProvider) SignIn(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +66,7 @@ func (p *GoogleProvider) SignIn(w http.ResponseWriter, r *http.Request) {
 		"client_id="+p.ClientID+"&"+
 		"response_type=code"+"&"+
 		"scope=openid%20email"+"&"+
-		"redirect_uri=https://"+r.Host+CallbackPath, 302)
+		"redirect_uri=https://"+r.Host+"/google"+CallbackPath, 302)
 }
 
 func (p *GoogleProvider) Redeem(r *http.Request) ([]byte, error) {
@@ -51,7 +77,7 @@ func (p *GoogleProvider) Redeem(r *http.Request) ([]byte, error) {
 		v.Add("code", code)
 		v.Add("client_id", p.ClientID)
 		v.Add("client_secret", p.ClientSecret)
-		v.Add("redirect_uri", "https://"+r.Host+CallbackPath)
+		v.Add("redirect_uri", "https://"+r.Host+"/google"+CallbackPath)
 		v.Add("grant_type", "authorization_code")
 		resp, err := http.PostForm(p.TokenUri, v)
 		if err != nil {

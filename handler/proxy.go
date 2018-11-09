@@ -47,7 +47,7 @@ func DefaultPathHandler(w http.ResponseWriter, r *http.Request) {
 		MaxAge: 300,
 	}
 	http.SetCookie(w, c)
-	http.Redirect(w, r, "https://"+r.Host+providers.SigninPath, 302)
+	http.Redirect(w, r, "https://"+r.Host+r.URL.Path+providers.SigninPath, 302)
 }
 
 func director(req *http.Request) {
