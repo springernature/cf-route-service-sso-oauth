@@ -28,8 +28,7 @@ func lastOperation(w http.ResponseWriter, r *http.Request) {
 
 	json, err := json.Marshal(lastOp)
 	if err != nil {
-		fmt.Println("Um, how did we fail to marshal this service instance:")
-		//fmt.Printf("%# v\n", pretty.Formatter(lastOp))
+		fmt.Println("Failed to marshal the service instance response")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte{})
 		return

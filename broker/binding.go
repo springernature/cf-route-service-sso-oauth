@@ -26,8 +26,7 @@ func bind(w http.ResponseWriter, r *http.Request) {
 
 	json, err := json.Marshal(bind)
 	if err != nil {
-		fmt.Println("Um, how did we fail to marshal this service binding response")
-		//fmt.Printf("%# v\n", pretty.Formatter(lastOp))
+		fmt.Println("Failed to marshal the service binding response")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte{})
 		return
