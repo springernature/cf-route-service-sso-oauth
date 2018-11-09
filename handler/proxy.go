@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/springernature/oauth-route-service-broker/htmltemplate"
@@ -33,8 +35,13 @@ func DefaultPathHandler(w http.ResponseWriter, r *http.Request) {
 	// ==== NO SUCCESSFUL AUTHENTICATION ==== //
 	// If authentication is not valid, do a redirect to the signin path on the sso service
 	// Compare if sso service and the app run on the same apex domain
-	if !sameApex(apexDomain(r.Host), forwardUrl) {
-		fmt.Fprintf(w, htmltemplate.NotSameApexErr, apexDomain(r.Host))
+	// First get the apex from the app
+	url, _ := url.Parse(forwardUrl)
+	appApex := apexDomain(url.Host)
+	// Select the sso service uri that matches on apex level with the app apex
+	ssoUri := ssoUriSelector(appApex)
+	if ssoUri == "" {
+		fmt.Fprintf(w, htmltemplate.NotSameApexErr, appApex)
 		return
 	}
 	// We want to know where to redirect to after signin in.
@@ -42,12 +49,12 @@ func DefaultPathHandler(w http.ResponseWriter, r *http.Request) {
 	c := &http.Cookie{
 		Name:   "CfSsoReqOrigin",
 		Value:  forwardUrl,
-		Domain: apexDomain(r.Host),
+		Domain: appApex,
 		Path:   "/",
 		MaxAge: 300,
 	}
 	http.SetCookie(w, c)
-	http.Redirect(w, r, "https://"+r.Host+r.URL.Path+providers.SigninPath, 302)
+	http.Redirect(w, r, "https://"+ssoUri+r.URL.Path+providers.SigninPath, 302)
 }
 
 func director(req *http.Request) {
@@ -70,17 +77,28 @@ func apexDomain(d string) string {
 	return s[len(s)-2] + "." + s[len(s)-1]
 }
 
-func sameApex(d1 string, f string) bool {
-	// Parse domain from forwardUrl
-	url, err := url.Parse(f)
+// Checks if the app apex matches with one of the apexs from the domains where the
+// sso service runs on. If there is a match, return which sso service domain to use.
+func ssoUriSelector(appApex string) string {
+	// Get the domain(s) where this sso service runs on
+	vcap := os.Getenv("VCAP_APPLICATION")
+	type VcapApplication struct {
+		Uris []string `json:"uris"`
+	}
+	var va VcapApplication
+	err := json.Unmarshal([]byte(vcap), &va)
 	if err != nil {
-		log.Printf("Error while parsing forwardUrl in 'sameApex() func: %v\n", err)
-		return false
+		log.Printf("Error while parsing VCAP_APPLICATION in 'sameApex() func: %v\n", err)
+		return ""
 	}
-	// Get apex domain from forwardUrl hostname
-	d2 := apexDomain(url.Host)
-	if d1 == d2 {
-		return true
+	// Check if there is a match between app (forwardUrl) and sso service domains
+	// Loop over all uris for sso service
+	for _, d := range va.Uris {
+		apex := apexDomain(d)
+		if apex == appApex {
+			// Match! Return the sso service uri where the match was found
+			return d
+		}
 	}
-	return false
+	return ""
 }

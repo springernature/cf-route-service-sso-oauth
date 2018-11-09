@@ -22,5 +22,5 @@ const (
 	<p><b>%v</b></p></html>`
 	NoForwardUrlErr string = "<html><h2>CF did not send Fordward URL in Header 'X-Cf-Forwarded-Url'</h2></html>"
 	NotSameApexErr  string = `<html><h2>The SSO Service and the App are not hosted on the same apex domain!</h2>
-	<p>Apex domain for SSO Service is: <b>%v</b></p></html>`
+	<p>The SSO service has no route configured for apex: <b>%v</b></p></html>`
 )
